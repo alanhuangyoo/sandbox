@@ -39,6 +39,8 @@ def scan(root: pathlib.Path, pkg: str):
 
         def walk(node):
             stack.append(node)
+            # node.level > 0 is a relative import - `from .transformers.x import y` inside the
+            # repo being scanned has nothing to do with the installed package of that name.
             if (isinstance(node, ast.ImportFrom) and node.module and node.level == 0
                     and (node.module == pkg or node.module.startswith(pkg + "."))
                     and not _guard(stack[:-1])):
@@ -60,8 +62,8 @@ def scan(root: pathlib.Path, pkg: str):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", type=pathlib.Path)
-    parser.add_argument("package")
+    parser.add_argument("root", type=pathlib.Path, help="tree to scan")
+    parser.add_argument("package", help="installed package to resolve against")
     args = parser.parse_args()
 
     version = getattr(importlib.import_module(args.package), "__version__", "?")
